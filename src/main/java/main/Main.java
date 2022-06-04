@@ -11,6 +11,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         HibernateUtil.getHibernateSession().close();
         SpringApplication.run(Main.class, args);
+        System.out.println();
 
     }
 }
