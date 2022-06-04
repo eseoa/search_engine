@@ -1,0 +1,25 @@
+userAgent: "Heliosbot/0.1 (+https://github.com/eseoa)"
+spring:
+  datasource:
+    url: "jdbc:${JAWSDB_URL:mysql://localhost:3306/test}"
+    username: "root"
+    password: "03012001"
+server:
+  port: "${PORT:8080}"
+jpa:
+  properties:
+    hibernate:
+      dialect: "org.hibernate.dialect.MySQL5Dialect"
+sites:
+    - url: "https://lenta.ru/"
+      name: "lenta"
+    - url: "http://www.proview.ru"
+      name: "proview.ru"
+    - url: "http://site1.com"
+      name: "site1"
+    - url: "https://skillbox.ru/"
+      name: "skillbox"
+
+
+
+
