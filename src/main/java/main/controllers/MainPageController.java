@@ -110,10 +110,7 @@ public class MainPageController {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    @GetMapping()
-    public String activities() {
-        return "index";
-    }
+
 
     @GetMapping("/search")
     public ResponseEntity<SearchResponseMarker> search(@RequestParam HashMap<String, String> params) {
