@@ -1,4 +1,7 @@
 userAgent: "Heliosbot/0.1 (+https://github.com/eseoa)"
+java:
+  runtime:
+    version: "11"
 runtime: "11"
 spring:
   datasource:
