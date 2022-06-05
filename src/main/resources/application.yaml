@@ -1,6 +1,8 @@
 userAgent: "Heliosbot/0.1 (+https://github.com/eseoa)"
-runtime_config:
-  jdk: "11"
+java:
+  runtime:
+    version: "17.0.3"
+runtime: "17.0.3"
 spring:
   datasource:
     url: "jdbc:${JAWSDB_URL:mysql://localhost:3306/test}"
