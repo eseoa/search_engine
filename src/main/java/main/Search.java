@@ -27,10 +27,12 @@ public class Search {
         }
         DBLemmas = getLemmasFromDB(session, lemmaCountMapRequest);
         if(DBLemmas.isEmpty()) {
+            session.close();
             return new ArrayList<>();
         }
         pageRank = getPageRankMap(session, DBLemmas, lemmaCountMapRequest.size());
         if(pageRank.isEmpty()) {
+            session.close();
             return new ArrayList<>();
         }
         maxAbsRank = pageRank.values().stream().max(Double::compare).get();
@@ -41,10 +43,9 @@ public class Search {
             double relRank = entry.getValue() / maxAbsRank;
             String title = entry.getKey().getTitle();
             String snippet = entry.getKey().getSnippet(searchString);
-            Session s = HibernateUtil.getHibernateSession();
-            Site site = (Site) s.createQuery("FROM Site WHERE id = :id").setParameter("id", entry.getKey().getSiteId()).stream().findFirst().get();
+
+            Site site = (Site) session.createQuery("FROM Site WHERE id = :id").setParameter("id", entry.getKey().getSiteId()).stream().findFirst().get();
             uri = uri.replaceAll(site.getUrl(),"");
-            s.close();
             searchResults.add(new SearchResult(site.getUrl(), site.getName(), uri, title, snippet, relRank));
         }
         searchResults.sort((o1, o2) -> Double.compare(o2.getRelevance(), o1.getRelevance()));
