@@ -1,10 +1,10 @@
-import main.LemmasGenerator;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-import java.util.HashMap;
+//import main.LemmasGenerator;
+//import org.junit.jupiter.api.Assertions;
+//import org.junit.jupiter.api.DisplayName;
+//import org.junit.jupiter.api.Test;
+//
+//import java.util.Arrays;
+//import java.util.HashMap;
 
 public class LemmasGeneratorTest {
 //    private static final String TEXT = "Тренировочные тексты на английском для среднего уровня сложности " +
