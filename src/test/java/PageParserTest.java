@@ -11,9 +11,9 @@
 //
 //import java.time.LocalDateTime;
 //import java.util.Optional;
-
-public class PageParserTest {
-
+//
+//public class PageParserTest {
+//
 //    private String path = "https://skillbox.ru/";
 //    private String siteName = "skillbox";
 //
@@ -46,4 +46,4 @@ public class PageParserTest {
 //        String actual = page.getCode() + " " + page.getPath();
 //        Assertions.assertEquals(expected, actual);
 //    }
-}
+//}

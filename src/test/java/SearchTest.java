@@ -15,8 +15,8 @@
 //
 //import java.time.LocalDateTime;
 //import java.util.Optional;
-
-public class SearchTest {
+//
+//public class SearchTest {
 //    private String path = "https://skillbox.ru/";
 //    private String siteName = "skillbox";
 //
@@ -74,4 +74,4 @@ public class SearchTest {
 //        String actual = Search.search(document.body().text(), path).get(0).getSiteName();
 //        Assertions.assertEquals(expected, actual);
 //    }
-}
+//}
