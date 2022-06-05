@@ -9,6 +9,7 @@ public class HibernateUtil {
 
     public static Session getHibernateSession() {
         if (sessionFactory == null) {
+
             sessionFactory = new Configuration().configure("hibernate.cfg.xml").buildSessionFactory();
         }
         return sessionFactory.openSession();

@@ -1,15 +1,19 @@
 userAgent: "Heliosbot/0.1 (+https://github.com/eseoa)"
 spring:
+  jpa:
+    properties:
+      hibernate:
+        dialect: "org.hibernate.dialect.MySQL5Dialect"
+    hibernate:
+      ddl-auto: "none"
   datasource:
-    url: "jdbc:${JAWSDB_URL:mysql://localhost:3306/test}"
+    url: "jdbc:mysql://localhost:3306/test?useSSL=false"
+#    url: "jdbc:${JAWSDB_URL:mysql://localhost:3306/test}"
     username: "root"
     password: "03012001"
 server:
-  port: "${PORT:3306}"
-jpa:
-  properties:
-    hibernate:
-      dialect: "org.hibernate.dialect.MySQL5Dialect"
+  port: "${PORT:8080}"
+
 sites:
     - url: "https://lenta.ru/"
       name: "lenta"
