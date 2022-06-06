@@ -9,7 +9,7 @@
 * spring-boot-starter-web 2.5.6
 * spring-boot-starter-thymeleaf 2.5.6
 * lombok 1.18.22
-* Junit 4.13.2
+* junit-jupiter 5.8.1
 * Jsoup 1.14.3
 * Для леммитизации слов был выбран лемматизатором, который используется в поисковом движке
 Apache Solr: https://github.com/akuznetsov/russianmorphology.
