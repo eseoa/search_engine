@@ -81,7 +81,7 @@ public class MainPageController {
                 }
                 return new ResponseEntity(new StartIndexingResponse(true), HttpStatus.OK);
             }
-            return new ResponseEntity(new ErrorResponse(false, "индексация уже запущена"), HttpStatus.OK);
+            return new ResponseEntity(new ErrorResponse(true, "индексация уже запущена"), HttpStatus.OK);
         }
         catch (Exception e){
             return new ResponseEntity<>(new ErrorResponse(false,"НА СЕРВЕРЕ ПРОИЗОШЛА ОШИБКА"), HttpStatus.OK);
