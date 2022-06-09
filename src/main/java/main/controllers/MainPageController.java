@@ -104,7 +104,7 @@ public class MainPageController {
                 } else {
                     mainNotExistIndexPage(url);
                 }
-                return new ResponseEntity<>(new IndexPageResponse(true), HttpStatus.OK);
+                return new ResponseEntity(new IndexPageResponse(true), HttpStatus.OK);
             }
             return new ResponseEntity(
                     new ErrorResponse(false, "Данная страница находится за пределами сайтов, " +
