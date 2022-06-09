@@ -3,10 +3,7 @@ package main.controllers;
 import main.*;
 import main.entities.Site;
 import main.entities.enums.SiteStatus;
-import main.responses.SearchResponse;
-import main.responses.SearchResponseError;
-import main.responses.SearchResponseMarker;
-import main.responses.StatisticsResponse;
+import main.responses.*;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +11,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -29,7 +23,7 @@ import java.util.concurrent.Executors;
 @EnableConfigurationProperties(value = Configuration.class)
 public class MainPageController {
 
-    private static final int THREADS_COUNT = 20;
+    private static final int THREADS_COUNT = 5;
     private static ExecutorService executorService;
     private static final TreeMap <String, String> urlName = new TreeMap<>();
 
@@ -43,74 +37,83 @@ public class MainPageController {
     }
 
     @GetMapping("/statistics")
-    public ResponseEntity<StatisticsResponse> statistics() {
-        StatisticsResponse statisticsRespones = new StatisticsResponse();
-        return new ResponseEntity<>(statisticsRespones, HttpStatus.OK);
+    public ResponseEntity statistics(){
+        try {
+            Session session = HibernateUtil.getHibernateSession();
+            StatisticsResponse statisticsResponse = new StatisticsResponse(session, true);
+            return new ResponseEntity<>(statisticsResponse, HttpStatus.OK);
+        }
+        catch (Exception e){
+            return new ResponseEntity<>(new ErrorResponse(false,"НА СЕРВЕРЕ ПРОИЗОШЛА ОШИБКА"), HttpStatus.OK);
+        }
     }
 
     @GetMapping("/stopIndexing")
-    public ResponseEntity<HashMap<String, String>> stopIndexing() {
-        HashMap<String, String> response = new HashMap<>();
-        if(nowIndexing()) {
-            executorService.shutdownNow();
-            response.put("result", "true");
-            return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity stopIndexing() {
+        try {
+            HashMap<String, String> response = new HashMap<>();
+            if (nowIndexing()) {
+                executorService.shutdownNow();
+                return new ResponseEntity(new StopIndexingResponse(true), HttpStatus.OK);
+            }
+            return new ResponseEntity(new ErrorResponse(false, "индексация не запущена"), HttpStatus.OK);
         }
-        response.put("result", "false");
-        response.put("error", "индексация не запущена");
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        catch (Exception e){
+            return new ResponseEntity<>(new ErrorResponse(false,"НА СЕРВЕРЕ ПРОИЗОШЛА ОШИБКА"), HttpStatus.OK);
+        }
     }
 
     @GetMapping("/startIndexing")
-    public ResponseEntity<HashMap<String, String>> startIndexing() {
-        HashMap<String, String> response = new HashMap<>();
-        if(!nowIndexing()) {
-            Session session = HibernateUtil.getHibernateSession();
-            Transaction transaction = session.beginTransaction();
-            session.createQuery("delete from Index").executeUpdate();
-            session.createQuery("delete from Lemma").executeUpdate();
-            session.createQuery("delete from Page").executeUpdate();
-            session.createQuery("delete from Site").executeUpdate();
-            transaction.commit();
-            session.close();
-            executorService = Executors.newFixedThreadPool(THREADS_COUNT);
-            for(Map.Entry<String, String> entry : urlName.entrySet()) {
-                executorService.submit(new IndexingStarter(entry.getKey(), entry.getValue()));
+    public ResponseEntity startIndexing() {
+        try {
+            if (!nowIndexing()) {
+                Session session = HibernateUtil.getHibernateSession();
+                Transaction transaction = session.beginTransaction();
+                session.createQuery("delete from Index").executeUpdate();
+                session.createQuery("delete from Lemma").executeUpdate();
+                session.createQuery("delete from Page").executeUpdate();
+                session.createQuery("delete from Site").executeUpdate();
+                transaction.commit();
+                session.close();
+                executorService = Executors.newFixedThreadPool(THREADS_COUNT);
+                for (Map.Entry<String, String> entry : urlName.entrySet()) {
+                    executorService.submit(new IndexingStarter(entry.getKey(), entry.getValue()));
+                }
+                return new ResponseEntity(new StartIndexingResponse(true), HttpStatus.OK);
             }
-            response.put("result", "true");
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ResponseEntity(new ErrorResponse(false, "индексация уже запущена"), HttpStatus.OK);
         }
-        response.put("result", "false");
-        response.put("error", "индексация уже запушена");
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        catch (Exception e){
+            return new ResponseEntity<>(new ErrorResponse(false,"НА СЕРВЕРЕ ПРОИЗОШЛА ОШИБКА"), HttpStatus.OK);
+        }
     }
 
     @PostMapping("/indexPage")
-    public ResponseEntity<HashMap<String, String>> mainExistIndexPage(@RequestParam String url) throws InterruptedException {
-        HashMap<String, String> response = new HashMap<>();
-        if(urlName.keySet().stream().anyMatch(url::contains)) {
-            String startUrl = urlName.keySet().stream().filter(url::contains).findFirst().get();
-            Session session = HibernateUtil.getHibernateSession();
-            Optional<Site> mainSite = session.createQuery("FROM Site WHERE url = :url ")
-                    .setParameter("url", startUrl)
-                    .stream()
-                    .findFirst();
-            session.close();
-            if(mainSite.isPresent()) {
-                mainExistIndexPage(mainSite, url);
+    public ResponseEntity mainExistIndexPage(@RequestParam String url) throws InterruptedException {
+        try {
+            if (urlName.keySet().stream().anyMatch(url::contains)) {
+                String startUrl = urlName.keySet().stream().filter(url::contains).findFirst().get();
+                Session session = HibernateUtil.getHibernateSession();
+                Optional<Site> mainSite = session.createQuery("FROM Site WHERE url = :url ")
+                        .setParameter("url", startUrl)
+                        .stream()
+                        .findFirst();
+                session.close();
+                if (mainSite.isPresent()) {
+                    mainExistIndexPage(mainSite, url);
+                } else {
+                    mainNotExistIndexPage(url);
+                }
+                return new ResponseEntity<>(new IndexPageResponse(true), HttpStatus.OK);
             }
-            else {
-                mainNotExistIndexPage(url);
-            }
-            response.put("result", "true");
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ResponseEntity(
+                    new ErrorResponse(false, "Данная страница находится за пределами сайтов, " +
+                            "указанных в конфигурационном файле"), HttpStatus.OK);
         }
-        response.put("result", "false");
-        response.put("error", "Данная страница находится за пределами сайтов, указанных в конфигурационном файле");
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        catch (Exception e){
+            return new ResponseEntity<>(new ErrorResponse(false,"НА СЕРВЕРЕ ПРОИЗОШЛА ОШИБКА"), HttpStatus.OK);
+        }
     }
-
-
 
     @GetMapping("/search")
     public ResponseEntity<SearchResponseMarker> search(@RequestParam HashMap<String, String> params) {
@@ -120,7 +123,7 @@ public class MainPageController {
             int limit = Integer.parseInt(params.get("limit"));
             if(params.get("query") == null || params.get("query").trim().isEmpty()) {
                 SearchResponseError searchResponseError = new SearchResponseError(false, "задан пустой запрос");
-                return new ResponseEntity<>(searchResponseError, HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(searchResponseError, HttpStatus.OK);
             }
             if (params.get("site") == null) {
                 searchResults = Search.search(params.get("query"));
@@ -135,12 +138,12 @@ public class MainPageController {
                 return new ResponseEntity<>(searchResponse, HttpStatus.OK);
             }
             SearchResponseError searchResponseError = new SearchResponseError(false, "Сайт не найден");
-            return new ResponseEntity<>(searchResponseError, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(searchResponseError, HttpStatus.OK);
         }
         catch (Exception e) {
             e.printStackTrace();
             SearchResponseError searchResponseError = new SearchResponseError(false, "Неизвестная ошибка");
-            return new ResponseEntity<>(searchResponseError, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(searchResponseError, HttpStatus.OK);
         }
     }
 

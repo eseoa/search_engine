@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class SearchResponseError implements SearchResponseMarker{
+public class StopIndexingResponse {
     private boolean result;
-    private String error;
 }

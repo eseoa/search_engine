@@ -9,9 +9,9 @@ import java.util.ArrayList;
 @Data
 @AllArgsConstructor
 public class SearchResponse implements SearchResponseMarker {
-    boolean result;
-    long count;
-    ArrayList<SearchResult> data;
+    private boolean result;
+    private long count;
+    private ArrayList<SearchResult> data;
 
 
 }

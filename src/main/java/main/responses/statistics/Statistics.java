@@ -12,8 +12,7 @@ public class Statistics {
     Total total;
     ArrayList<Detailed> detailed = new ArrayList<>();
 
-    public Statistics() {
-        Session session = HibernateUtil.getHibernateSession();
+    public Statistics(Session session) {
         total = new Total(session);
         ArrayList<Site> sites = (ArrayList<Site>) session.createQuery("from Site").list();
         for(Site site : sites) {
