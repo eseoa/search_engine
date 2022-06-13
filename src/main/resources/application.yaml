@@ -1,0 +1,16 @@
+userAgent: "Heliosbot/0.1 (+https://github.com/eseoa)"
+server:
+  port: "${PORT:8080}"
+sites:
+    - url: "https://lenta.ru/"
+      name: "lenta"
+    - url: "http://www.proview.ru"
+      name: "proview.ru"
+    - url: "http://site1.com"
+      name: "site1"
+    - url: "https://skillbox.ru/"
+      name: "skillbox"
+
+
+
+
