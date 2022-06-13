@@ -70,7 +70,7 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
     }
 
     private void parsePage(List<LinksParser> taskList) throws InterruptedException {
-        while (HibernateUtil.getStatistics().getSessionOpenCount() - HibernateUtil.getStatistics().getSessionCloseCount() >= 20) {
+        while (HibernateUtil.getStatistics().getSessionOpenCount() - HibernateUtil.getStatistics().getSessionCloseCount() >= 6) {
             Thread.sleep(500);
         }
         try (Session session = HibernateUtil.getHibernateSession()) {
