@@ -1,9 +1,9 @@
-import main.HibernateUtil;
-import main.PageParser;
-import main.Search;
-import main.entities.Page;
-import main.entities.Site;
-import main.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.HibernateUtil;
+import com.github.eseoa.searchEngine.entities.Page;
+import com.github.eseoa.searchEngine.entities.Site;
+import com.github.eseoa.searchEngine.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.parser.PageParser;
+import com.github.eseoa.searchEngine.seacrh.Search;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.jsoup.Jsoup;
@@ -30,7 +30,7 @@ public class SearchTest {
                 .findFirst();
         if(mainSite.isPresent()) {
             Site site = mainSite.get();
-            PageParser.parse(path, site);
+            new PageParser(session, path, site.getId()).parse();
             session.close();
         }
         else {
@@ -39,7 +39,7 @@ public class SearchTest {
             session.save(site);
             transaction.commit();
             session.close();
-            PageParser.parse(path, site);
+            new PageParser(session, path, site.getId()).parse();
         }
     }
 

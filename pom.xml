@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>skillbox-java-course</groupId>
+    <groupId>com.github.eseoa</groupId>
     <artifactId>search-engine</artifactId>
     <version>1.0</version>
 
@@ -90,7 +90,6 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
             <version>${springBoot.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>mysql</groupId>

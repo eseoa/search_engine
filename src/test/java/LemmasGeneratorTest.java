@@ -1,4 +1,4 @@
-import main.LemmasGenerator;
+import com.github.eseoa.searchEngine.lemmitization.LemmasGenerator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

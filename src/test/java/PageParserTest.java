@@ -1,8 +1,8 @@
-import main.HibernateUtil;
-import main.PageParser;
-import main.entities.Page;
-import main.entities.Site;
-import main.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.HibernateUtil;
+import com.github.eseoa.searchEngine.entities.Page;
+import com.github.eseoa.searchEngine.entities.Site;
+import com.github.eseoa.searchEngine.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.parser.PageParser;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.junit.jupiter.api.Assertions;
@@ -28,14 +28,14 @@ public class PageParserTest {
                 .findFirst();
         if(mainSite.isPresent()) {
             Site site = mainSite.get();
-            PageParser.parse(path, site);
+            new PageParser(session, path, site.getId()).parse();
         }
         else {
             Transaction transaction = session.beginTransaction();
             Site site = new Site(SiteStatus.INDEXED, LocalDateTime.now(), null, path, siteName);
             session.save(site);
             transaction.commit();
-            PageParser.parse(path, site);
+            new PageParser(session, path, site.getId()).parse();
         }
         Page page = (Page) session.createQuery("FROM Page WHERE path = :path")
                 .setParameter("path", path)
