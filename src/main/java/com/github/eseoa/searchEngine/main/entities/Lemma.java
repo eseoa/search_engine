@@ -1,4 +1,4 @@
-package com.github.eseoa.searchEngine.entities;
+package com.github.eseoa.searchEngine.main.entities;
 
 import lombok.Data;
 
@@ -8,6 +8,7 @@ import java.util.List;
 @Entity
 @Table (name = "lemmas")
 @Data
+
 public class Lemma {
 
     @Id
@@ -19,7 +20,7 @@ public class Lemma {
     private int frequency;
     @Column(name = "site_id")
     private int siteId;
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany()
     @JoinTable(name = "indexes",
             joinColumns = {@JoinColumn(name = "lemma_id")},
             inverseJoinColumns = {@JoinColumn(name = "page_id")}

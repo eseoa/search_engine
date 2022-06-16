@@ -1,8 +1,9 @@
 package com.github.eseoa.searchEngine.responses.statistics;
 
-import com.github.eseoa.searchEngine.entities.Site;
+import com.github.eseoa.searchEngine.main.entities.Site;
+import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
 import lombok.Data;
-import org.hibernate.Session;
 
 @Data
 public class Detailed {
@@ -15,14 +16,14 @@ public class Detailed {
     private long lemmas;
 
 
-    public Detailed(Session session, Site site) {
+    public Detailed(LemmaRepository lemmaRepository, PageRepository pageRepository, Site site) {
         url = site.getUrl();
         name = site.getName();
         status = String.valueOf(site.getStatus());
         statusTime = String.valueOf(site.getDateTime());
         error = site.getLastError();
-        pages = (long) session.createQuery("SELECT count(*) from Page WHERE siteId = " + site.getId()).list().get(0);
-        lemmas = (long) session.createQuery("SELECT count(*) from Lemma WHERE siteId = " + site.getId()).list().get(0);;
+        pages = pageRepository.countBySiteId(site.getId());
+        lemmas = lemmaRepository.countBySiteId(site.getId());
 
 
     }

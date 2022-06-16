@@ -1,14 +1,15 @@
-package com.github.eseoa.searchEngine.entities;
+package com.github.eseoa.searchEngine.main.entities;
 
-import com.github.eseoa.searchEngine.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
 import lombok.Data;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
+@Entity (name = "Site")
 @Table (name = "sites")
 @Data
+@Cacheable(false)
 public class Site {
 
     @Id
@@ -18,7 +19,7 @@ public class Site {
     @Column (nullable = false)
     private SiteStatus status;
     @Column (columnDefinition = "datetime", nullable = false)
-    private LocalDateTime DateTime;
+    private LocalDateTime dateTime;
     @Column (columnDefinition = "text")
     private String lastError;
     @Column (nullable = false)
@@ -28,7 +29,7 @@ public class Site {
 
     public Site(SiteStatus status, LocalDateTime dateTime, String lastError, String url, String name) {
         this.status = status;
-        this.DateTime = dateTime;
+        this.dateTime = dateTime;
         this.lastError = lastError;
         this.url = url;
         this.name = name;

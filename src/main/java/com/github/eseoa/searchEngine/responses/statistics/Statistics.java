@@ -1,6 +1,9 @@
 package com.github.eseoa.searchEngine.responses.statistics;
 
-import com.github.eseoa.searchEngine.entities.Site;
+import com.github.eseoa.searchEngine.main.entities.Site;
+import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
 import lombok.Data;
 import org.hibernate.Session;
 
@@ -11,12 +14,11 @@ public class Statistics {
     Total total;
     ArrayList<Detailed> detailed = new ArrayList<>();
 
-    public Statistics(Session session) {
-        total = new Total(session);
-        ArrayList<Site> sites = (ArrayList<Site>) session.createQuery("from Site").list();
+    public Statistics(LemmaRepository lemmaRepository, SiteRepository siteRepository, PageRepository pageRepository) {
+        total = new Total(lemmaRepository, siteRepository, pageRepository);
+        ArrayList<Site> sites = (ArrayList<Site>) siteRepository.findAll();
         for(Site site : sites) {
-            detailed.add(new Detailed(session, site));
+            detailed.add(new Detailed(lemmaRepository, pageRepository, site));
         }
-        session.close();
     }
 }

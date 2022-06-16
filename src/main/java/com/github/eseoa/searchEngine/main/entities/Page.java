@@ -1,4 +1,4 @@
-package com.github.eseoa.searchEngine.entities;
+package com.github.eseoa.searchEngine.main.entities;
 
 import com.github.eseoa.searchEngine.lemmitization.LemmasGenerator;
 import lombok.Data;
@@ -10,6 +10,7 @@ import java.util.List;
 @Entity
 @Table(name = "pages")
 @Data
+
 public class Page {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

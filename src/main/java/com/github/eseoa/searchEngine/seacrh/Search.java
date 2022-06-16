@@ -1,37 +1,55 @@
 package com.github.eseoa.searchEngine.seacrh;
 
-import com.github.eseoa.searchEngine.HibernateUtil;
-import com.github.eseoa.searchEngine.entities.Lemma;
-import com.github.eseoa.searchEngine.entities.Page;
-import com.github.eseoa.searchEngine.entities.Site;
-import com.github.eseoa.searchEngine.lemmitization.LemmasGenerator;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.github.eseoa.searchEngine.main.entities.Index;
+import com.github.eseoa.searchEngine.main.entities.Lemma;
+import com.github.eseoa.searchEngine.main.entities.Page;
+import com.github.eseoa.searchEngine.main.entities.Site;
+import com.github.eseoa.searchEngine.lemmitization.LemmasGenerator;
+import com.github.eseoa.searchEngine.main.entities.repositories.IndexRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.specs.IndexSpecification;
+import com.github.eseoa.searchEngine.main.entities.repositories.specs.LemmaSpecification;
+import com.github.eseoa.searchEngine.main.entities.repositories.specs.SearchCriteria;
+import com.github.eseoa.searchEngine.main.entities.repositories.specs.SearchOperation;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.text.DecimalFormat;
+import java.util.*;
+
 
 public class Search {
 
-    public static ArrayList<SearchResult> search (String searchString) {
-        HashMap<String, Integer> lemmaCountMapRequest;
-        List<Lemma> DBLemmas;
-        HashMap<Page, Double> pageRank;
-        ArrayList<SearchResult> searchResults = null;
-        double maxAbsRank;
-        try(Session session = HibernateUtil.getHibernateSession()) {
-            Transaction transaction = session.beginTransaction();
+    private final SiteRepository siteRepository;
+    private final LemmaRepository lemmaRepository;
+    private final IndexRepository indexRepository;
+    private HashMap<String, Integer> lemmaCountMapRequest;
+    private List<Lemma> dBLemmas;
+    private HashMap<Page, Double> pageRank;
+    private ArrayList<SearchResult> searchResults;
+    private double maxAbsRank;
+
+
+
+    public Search(SiteRepository siteRepository, LemmaRepository lemmaRepository, IndexRepository indexRepository) {
+        this.siteRepository = siteRepository;
+        this.lemmaRepository = lemmaRepository;
+        this.indexRepository = indexRepository;
+    }
+
+    public ArrayList<SearchResult> search (String searchString) {
+        try {
             lemmaCountMapRequest = LemmasGenerator.getLemmaCountMap(searchString);
             if (lemmaCountMapRequest.isEmpty()) {
                 return new ArrayList<>();
             }
-            DBLemmas = getLemmasFromDB(session, lemmaCountMapRequest);
-            if (DBLemmas.isEmpty()) {
+            dBLemmas = getLemmasFromDB();
+            if (dBLemmas.isEmpty()) {
                 return new ArrayList<>();
             }
-            pageRank = getPageRankMap(session, DBLemmas, lemmaCountMapRequest.size());
+            pageRank = getPageRankMap();
             if (pageRank.isEmpty()) {
                 return new ArrayList<>();
             }
@@ -39,17 +57,14 @@ public class Search {
             searchResults = new ArrayList<>();
             for (Map.Entry<Page, Double> entry : pageRank.entrySet()) {
                 String uri = entry.getKey().getPath();
-
                 double relRank = entry.getValue() / maxAbsRank;
                 String title = entry.getKey().getTitle();
                 String snippet = entry.getKey().getSnippet(searchString);
-
-                Site site = (Site) session.createQuery("FROM Site WHERE id = :id").setParameter("id", entry.getKey().getSiteId()).stream().findFirst().get();
+                Site site = siteRepository.findById(entry.getKey().getSiteId()).get();
                 uri = uri.replaceAll(site.getUrl(), "");
                 searchResults.add(new SearchResult(site.getUrl(), site.getName(), uri, title, snippet, relRank));
             }
             searchResults.sort((o1, o2) -> Double.compare(o2.getRelevance(), o1.getRelevance()));
-            transaction.commit();
         }
         catch (Exception e){
             e.printStackTrace();
@@ -57,24 +72,21 @@ public class Search {
         return searchResults;
     }
 
-    public static ArrayList<SearchResult> search (String searchString, String searchSite) {
-        HashMap<String, Integer> lemmaCountMapRequest;
-        List<Lemma> DBLemmas;
-        HashMap<Page, Double> pageRank;
-        ArrayList<SearchResult> searchResults = null;
-        double maxAbsRank;
-        try (Session session = HibernateUtil.getHibernateSession()) {
-            Transaction transaction = session.beginTransaction();
+    public ArrayList<SearchResult> search (String searchString, String searchSite) {
+        try {
             lemmaCountMapRequest = LemmasGenerator.getLemmaCountMap(searchString);
             if (lemmaCountMapRequest.isEmpty()) {
                 return new ArrayList<>();
             }
-            Site site = (Site) session.createQuery("FROM Site WHERE url = :url").setParameter("url", searchSite).stream().findFirst().get();
-            DBLemmas = getLemmasFromDBBySite(session, lemmaCountMapRequest, site);
-            if (DBLemmas.isEmpty()) {
+            Optional<Site> site = siteRepository.findByUrl(searchSite);
+            if(site.isEmpty()) {
                 return new ArrayList<>();
             }
-            pageRank = getPageRankMap(session, DBLemmas, lemmaCountMapRequest.size());
+            dBLemmas = getLemmasFromDBBySite(site.get());
+            if (dBLemmas.isEmpty()) {
+                return new ArrayList<>();
+            }
+            pageRank = getPageRankMap();
             if (pageRank.isEmpty()) {
                 return new ArrayList<>();
             }
@@ -82,14 +94,13 @@ public class Search {
             searchResults = new ArrayList<>();
             for (Map.Entry<Page, Double> entry : pageRank.entrySet()) {
                 String uri = entry.getKey().getPath();
-                uri = uri.replaceAll(site.getUrl(), "");
+                uri = uri.replaceAll(site.get().getUrl(), "");
                 double relRank = entry.getValue() / maxAbsRank;
                 String title = entry.getKey().getTitle();
                 String snippet = entry.getKey().getSnippet(searchString);
-                searchResults.add(new SearchResult(site.getUrl(), site.getName(), uri, title, snippet, relRank));
+                searchResults.add(new SearchResult(site.get().getUrl(), site.get().getName(), uri, title, snippet, relRank));
             }
             searchResults.sort((o1, o2) -> Double.compare(o2.getRelevance(), o1.getRelevance()));
-            transaction.commit();
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -97,52 +108,38 @@ public class Search {
         return searchResults;
     }
 
-    private static ArrayList<Lemma> getLemmasFromDB(Session session, HashMap <String, Integer> lemmaCountMapRequest) {
-        boolean isFirst = true;
-        StringBuilder queryBuilder = new StringBuilder();
-        queryBuilder.append("FROM Lemma WHERE lemma = ");
+    private List<Lemma> getLemmasFromDB() {
+        LemmaSpecification lemmaSpecification = new LemmaSpecification();
         for(String lemma : lemmaCountMapRequest.keySet()) {
-            if(isFirst) {
-                queryBuilder.append("'").append(lemma).append("'");
-                isFirst = false;
-                continue;
-            }
-            queryBuilder.append(" OR ").append("lemma = '").append(lemma).append("'");
+            lemmaSpecification.add(new SearchCriteria("lemma", lemma, SearchOperation.EQUAL));
         }
-        queryBuilder.append(" ORDER BY frequency");
-        return (ArrayList<Lemma>) session.createQuery(queryBuilder.toString()).list();
-
+        List<Lemma> dBLemmas= lemmaRepository.findAll(lemmaSpecification);
+        dBLemmas.sort(Comparator.comparingInt(Lemma::getFrequency));
+        return dBLemmas;
     }
 
-    private static StringBuilder getSumRankQueryBuilder(List<Lemma> DBLemmas) {
-        boolean isFirst = true;
-        StringBuilder queryBuilder = new StringBuilder();
-        queryBuilder.append("SELECT SUM(i.rank) FROM Lemma AS l\n" +
-                "JOIN Index AS i ON l.id = i.lemma\n" +
-                "JOIN Page AS p ON p.id = i.page\n" +
-                "WHERE (l.id = ");
-        for(Lemma lemma : DBLemmas) {
-            if (isFirst) {
-                queryBuilder.append(lemma.getId());
-                isFirst = false;
-                continue;
-            }
-            queryBuilder.append(" OR l.id = ").append(lemma.getId());
+    private HashMap<Page, Double> getPageRankMap () {
+        ArrayList<Page> pages = getPagesByLemmas();
+        HashMap<Page, Double> pageRank = new HashMap<>();
+        IndexSpecification indexSpecLemmas = getIndexSpecForDBLemmas();
+        for(Page page : pages) {
+            IndexSpecification indexSpecPage = new IndexSpecification();
+            indexSpecPage.add(new SearchCriteria("page", page, SearchOperation.EQUAL));
+            double rank = indexRepository
+                    .findAll(Specification.where(indexSpecLemmas).and(indexSpecPage)).stream()
+                    .map(Index::getRank)
+                    .reduce(0.0, Double::sum);
+
+            pageRank.put(page, rank);
         }
-        queryBuilder.append(") AND p.id = ");
-        return queryBuilder;
+        return pageRank;
     }
 
-    private static ArrayList<Page> getPagesByLemmas (List<Lemma> DBLemmas, int lemmasCount) {
-        HashMap<Integer, ArrayList<Lemma>> siteLemmasMap = new HashMap<>();
+    private ArrayList<Page> getPagesByLemmas () {
+        HashMap<Integer, ArrayList<Lemma>> siteIdLemmasMap = getSiteIdLemmasMap();
         ArrayList<Page> pagesList = new ArrayList<>();
         boolean isFirst = true;
-        for(Map.Entry<Integer, ArrayList<Lemma>> entry : getSiteLemmasMap(DBLemmas).entrySet()) {
-            if(entry.getValue().size() == lemmasCount) {
-                siteLemmasMap.put(entry.getKey(), entry.getValue());
-            }
-        }
-        for (Map.Entry<Integer, ArrayList<Lemma>> entry : siteLemmasMap.entrySet())
+        for (Map.Entry<Integer, ArrayList<Lemma>> entry : siteIdLemmasMap.entrySet())
         {
             ArrayList<Page> pages = new ArrayList<>();
             for (Lemma lemma : entry.getValue()) {
@@ -152,7 +149,7 @@ public class Search {
                     continue;
                 }
                 for (int i = 0; i < pages.size(); i++) {
-                    if (!pages.get(i).getLemmas().stream().map(l -> l.getId()).toList().contains(lemma.getId())) {
+                    if (!pages.get(i).getLemmas().stream().map(Lemma::getId).toList().contains(lemma.getId())) {
                         pages.remove(i);
                         i--;
                     }
@@ -165,56 +162,43 @@ public class Search {
 
     }
 
-    private static HashMap<Page, Double> getPageRankMap (Session session, List<Lemma> DBLemmas, int lemmasCount) {
-        StringBuilder queryBuilder;
-        ArrayList<Page> pages = getPagesByLemmas(DBLemmas, lemmasCount);
-        HashMap<Page, Double> pageRank = new HashMap<>();
-        for(Page page : pages){
-            queryBuilder = new StringBuilder();
-            queryBuilder.append(getSumRankQueryBuilder(DBLemmas)).append(page.getId());
-            pageRank.put(page, (Double) session.createQuery(queryBuilder.toString()).list().get(0));
+    private IndexSpecification getIndexSpecForDBLemmas() {
+        IndexSpecification indexSpecification = new IndexSpecification();
+        for(Lemma lemma : dBLemmas) {
+            indexSpecification.add(new SearchCriteria("lemma", lemma, SearchOperation.EQUAL));
         }
-        return pageRank;
-
+        return indexSpecification;
     }
 
-    private static HashMap<Integer, ArrayList<Lemma>> getSiteLemmasMap (List<Lemma> DBLemmas) {
-        HashMap<Integer, ArrayList<Lemma>> siteLemmasMap = new HashMap<>();
-        for (Lemma lemma : DBLemmas) {
-            if (siteLemmasMap.get(lemma.getSiteId()) == null) {
+    private HashMap<Integer, ArrayList<Lemma>> getSiteIdLemmasMap () {
+        HashMap<Integer, ArrayList<Lemma>> siteIdLemmasMap = new HashMap<>();
+        for (Lemma lemma : dBLemmas) {
+            if (siteIdLemmasMap.get(lemma.getSiteId()) == null) {
                 ArrayList<Lemma> l = new ArrayList<>();
                 l.add(lemma);
-                siteLemmasMap.put(lemma.getSiteId(), l);
+                siteIdLemmasMap.put(lemma.getSiteId(), l);
             } else {
-                ArrayList<Lemma> l = siteLemmasMap.get(lemma.getSiteId());
+                ArrayList<Lemma> l = siteIdLemmasMap.get(lemma.getSiteId());
                 l.add(lemma);
-                siteLemmasMap.put(lemma.getSiteId(), l);
+                siteIdLemmasMap.put(lemma.getSiteId(), l);
             }
         }
-        return siteLemmasMap;
+        siteIdLemmasMap.entrySet().removeIf(entry -> entry.getValue().size() != lemmaCountMapRequest.size());
+        return siteIdLemmasMap;
     }
 
-    private static ArrayList<Lemma> getLemmasFromDBBySite(Session session,
-                                                          HashMap <String, Integer> lemmaCountMapRequest,
-                                                          Site site) {
-        boolean isFirst = true;
-        StringBuilder queryBuilder = new StringBuilder();
-        queryBuilder.append("FROM Lemma WHERE ( lemma = ");
+    private List<Lemma> getLemmasFromDBBySite(Site site) {
+        LemmaSpecification lemmaSpecification = new LemmaSpecification();
         for(String lemma : lemmaCountMapRequest.keySet()) {
-            if(isFirst) {
-                queryBuilder.append("'").append(lemma).append("'");
-                isFirst = false;
-                continue;
-            }
-            queryBuilder.append(" OR ").append("lemma = '").append(lemma).append("'");
+            lemmaSpecification.add(new SearchCriteria("lemma", lemma, SearchOperation.EQUAL));
         }
-        queryBuilder.append(" ) AND ").append("siteId = '").append(site.getId()).append("'");
-        queryBuilder.append(" ORDER BY frequency");
-        ArrayList<Lemma> lemmas = (ArrayList<Lemma>) session.createQuery(queryBuilder.toString()).list();
-        if(lemmaCountMapRequest.keySet().size() != lemmas.size()) {
-            lemmas.clear();
+        LemmaSpecification lemmaSpecSite = new LemmaSpecification();
+        lemmaSpecSite.add(new SearchCriteria ("siteId", site.getId(), SearchOperation.EQUAL));
+        List<Lemma> dBLemmas= lemmaRepository.findAll(Specification.where(lemmaSpecification).and(lemmaSpecSite));
+        if(lemmaCountMapRequest.keySet().size() != dBLemmas.size()) {
+            dBLemmas.clear();;
         }
-        return lemmas;
+        return dBLemmas;
 
     }
 

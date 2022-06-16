@@ -1,6 +1,18 @@
 userAgent: "Heliosbot/0.1 (+https://github.com/eseoa)"
 server:
   port: "${PORT:8080}"
+spring:
+  datasource:
+    url: ""
+    username: ""
+    password: ""
+    driver-class-name: "com.mysql.cj.jdbc.Driver"
+  jpa:
+    show-sql: false
+    hibernate:
+      dialect: "org.hibernate.dialect.MySQL5Dialect"
+      ddl-auto: create
+
 sites:
     - url: "https://lenta.ru/"
       name: "lenta"

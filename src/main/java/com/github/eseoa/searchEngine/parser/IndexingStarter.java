@@ -1,8 +1,11 @@
 package com.github.eseoa.searchEngine.parser;
 
-import com.github.eseoa.searchEngine.HibernateUtil;
-import com.github.eseoa.searchEngine.entities.Site;
-import com.github.eseoa.searchEngine.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.main.entities.Site;
+import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.main.entities.repositories.IndexRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
 import org.hibernate.Session;
 
 import java.time.LocalDateTime;
@@ -12,12 +15,24 @@ public class IndexingStarter implements Runnable {
 
 
     private static final int WAIT_TIME = 5_000;
-    private String url;
-    private String name;
+    private final String url;
+    private final String name;
+    SiteRepository siteRepository;
+    LemmaRepository lemmaRepository;
+    IndexRepository indexRepository;
+    PageRepository pageRepository;
 
 
-    public IndexingStarter(String url, String name) {
-
+    public IndexingStarter(String url,
+                           String name,
+                           SiteRepository siteRepository,
+                           LemmaRepository lemmaRepository,
+                           IndexRepository indexRepository,
+                           PageRepository pageRepository ) {
+        this.siteRepository = siteRepository;
+        this.lemmaRepository = lemmaRepository;
+        this.indexRepository = indexRepository;
+        this.pageRepository = pageRepository;
         this.url = url;
         this.name = name;
     }
@@ -25,16 +40,18 @@ public class IndexingStarter implements Runnable {
     @Override
     public void run() {
         try {
-            Session session = HibernateUtil.getHibernateSession();
-            session.beginTransaction();
             ForkJoinPool forkJoinPool = new ForkJoinPool();
             Site site = new Site(SiteStatus.INDEXING, LocalDateTime.now(), null, url, name);
-            session.save(site);
+            siteRepository.save(site);
             LinksParser.setCANCEL(false);
-            LinksParser linksParser = new LinksParser(url, url, site);
+            LinksParser linksParser = new LinksParser(url,
+                    url,
+                    site,
+                    siteRepository,
+                    lemmaRepository,
+                    indexRepository,
+                    pageRepository);
             forkJoinPool.submit(linksParser);
-            session.getTransaction().commit();
-            session.close();
             while (true) {
                 if (Thread.interrupted()) {
                     forkJoinPool.shutdownNow();
@@ -45,24 +62,17 @@ public class IndexingStarter implements Runnable {
                     break;
                 }
             }
-            session = HibernateUtil.getHibernateSession();
-            session.beginTransaction();
             Thread.sleep(WAIT_TIME);
-            site = session.get(Site.class, site.getId());
-            long lemmasCount = (long) session.createQuery("SELECT COUNT(*) FROM Lemma WHERE siteId = :siteId")
-                    .setParameter("siteId", site.getId())
-                    .stream()
-                    .findFirst().get();
+            site = siteRepository.getById(site.getId());
+            long lemmasCount =  lemmaRepository.countBySiteId(site.getId());
             if (lemmasCount == 0) {
-                site.setStatus(SiteStatus.FAILED);
+                siteRepository.setStatusById(SiteStatus.FAILED, site.getId());;
             }
             if (!site.getStatus().equals(SiteStatus.FAILED)) {
-                site.setStatus(SiteStatus.INDEXED);
+                siteRepository.setStatusById(SiteStatus.INDEXED, site.getId());
             }
             site.setDateTime(LocalDateTime.now());
-            session.update(site);
-            session.getTransaction().commit();
-            session.close();
+            siteRepository.setTimeById(LocalDateTime.now(), site.getId());
         }
         catch (Exception e) {
             e.printStackTrace();

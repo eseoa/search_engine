@@ -1,10 +1,14 @@
 package com.github.eseoa.searchEngine.parser;
 
-import com.github.eseoa.searchEngine.entities.Index;
-import com.github.eseoa.searchEngine.entities.Lemma;
-import com.github.eseoa.searchEngine.entities.Page;
-import com.github.eseoa.searchEngine.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.main.entities.Index;
+import com.github.eseoa.searchEngine.main.entities.Lemma;
+import com.github.eseoa.searchEngine.main.entities.Page;
+import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
 import com.github.eseoa.searchEngine.lemmitization.LemmasGenerator;
+import com.github.eseoa.searchEngine.main.entities.repositories.IndexRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.jsoup.Jsoup;
@@ -14,23 +18,36 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 @Component
 public class PageParser {
     public static String userAgent;
-    private static final float TITLE_RANK = 1.0F;
-    private static final float BODY_RANK = 0.8F;
-    private final Session session;
+    private static final double TITLE_RANK = 1.0;
+    private static final double BODY_RANK = 0.8;
     private final String url;
-//    private Site site;
     private final int siteId;
     private Document document;
     private Page page;
+    private SiteRepository siteRepository;
+    private LemmaRepository lemmaRepository;
+    private IndexRepository indexRepository;
+    private PageRepository pageRepository;
 
-    public PageParser(Session session, String url, int siteId) {
-        this.session = session;
+
+    public PageParser(SiteRepository siteRepository,
+                      LemmaRepository lemmaRepository,
+                      IndexRepository indexRepository,
+                      PageRepository pageRepository,
+                      int siteId,
+                      String url) {
+        this.siteRepository = siteRepository;
+        this.lemmaRepository = lemmaRepository;
+        this.indexRepository = indexRepository;
+        this.pageRepository = pageRepository;
         this.url = url;
         this.siteId = siteId;
         try {
@@ -43,12 +60,9 @@ public class PageParser {
     public Elements parse () {
         try {
             if(Thread.interrupted() || document == null) {
-                return null ;
+                return null;
             }
-            Optional<Page> pageOptional = session.createQuery("FROM Page WHERE path = :path")
-                    .setParameter("path", url)
-                    .stream()
-                    .findFirst();
+            Optional<Page> pageOptional = pageRepository.findByPath(url);
             if(pageOptional.isPresent()) {
                 clearDB(pageOptional.get());
             }
@@ -73,15 +87,9 @@ public class PageParser {
 
     private boolean isBadCode() {
         if(page.getCode() >= 400) {
-            session.beginTransaction();
-            Query query = session.createQuery("update Site set dateTime = :dateTime, lastError = :message where id = :id");
-            query.setParameter("id", siteId);
-            query.setParameter("dateTime", LocalDateTime.now());
-            query.setParameter("message", document.connection().response().statusMessage());
-            query.executeUpdate();
-            session.save(page);
-            session.getTransaction().commit();
-//            session.getTransaction().commit();
+            siteRepository.setTimeAndErrorById(LocalDateTime.now(),
+                    document.connection().response().statusMessage(),
+                    siteId);
             return true;
         }
         return false;
@@ -95,120 +103,64 @@ public class PageParser {
         checkLemmaMap(pageLemmas,page.getPath() + " пустой");
         checkLemmaMap(titleLemmas,page.getPath() + " заголовок пуст");
         checkLemmaMap(bodyLemmas,page.getPath() + " тело пустое");
-        session.beginTransaction();
-        session.save(page);
-        session.getTransaction().commit();
-        Query query = session.createQuery("FROM Lemma WHERE lemma = :lemma AND siteId = :siteId");
+        pageRepository.save(page);
         for(String sLemma : pageLemmas.keySet()) {
             if(Thread.interrupted()) {
-                session.beginTransaction();
-                session.createQuery("update Site set dateTime = :dateTime, status = :status where id = :id")
-                        .setParameter("id", siteId)
-                        .setParameter("dateTime", LocalDateTime.now())
-                        .setParameter("status", SiteStatus.INDEXED)
-                        .executeUpdate();
-                session.getTransaction().commit();
-//                session.getTransaction().commit();
+                siteRepository.setTimeAndStatusById(LocalDateTime.now(), SiteStatus.INDEXED, siteId);
                 return;
             }
-            float rank;
-            Lemma dBLemma = saveAndGetLemma(query, sLemma);
+            sLemma = sLemma.trim();
+            double rank;
+            Lemma dBLemma = saveAndGetLemma(sLemma);
             rank = titleLemmas.getOrDefault(sLemma, 0) * TITLE_RANK;
             rank += bodyLemmas.getOrDefault(sLemma, 0) * BODY_RANK;
-            session.beginTransaction();
-            session.save(new Index(page, dBLemma, rank));
-            session.getTransaction().commit();
-//            session.getTransaction().commit();
+            indexRepository.save(new Index(page, dBLemma, rank));
         }
-        updateSiteTime();
-//        session.getTransaction().commit();
+        siteRepository.setTimeById(LocalDateTime.now(), siteId);
     }
 
-    private Lemma saveAndGetLemma (Query query, String sLemma) {
+    private Lemma saveAndGetLemma (String sLemma) {
         Lemma dBLemma;
-        Optional<Lemma> optional = query
-                .setParameter("lemma", sLemma)
-                .setParameter("siteId", siteId)
-                .stream()
-                .findFirst();
-        if(optional.isEmpty()) {
-            session.beginTransaction();
+        ArrayList<Lemma> lemmasList = (ArrayList<Lemma>) lemmaRepository.findBySiteIdAndLemma(siteId, sLemma);
+        if(lemmasList.isEmpty()) {
             dBLemma = new Lemma(sLemma, 1, siteId);
-            session.save(dBLemma);
-            session.getTransaction().commit();
+            lemmaRepository.save(dBLemma);
+            return dBLemma;
+        }
+        if(lemmasList.size() > 1) {
+            lemmaRepository.deleteById(lemmasList.get(1).getId());
+            lemmaRepository.setFrequencyById(lemmasList.get(0).getFrequency() + 2, lemmasList.get(0).getId());
         }
         else {
-            session.beginTransaction();
-            dBLemma = optional.get();
-            dBLemma.setFrequency(dBLemma.getFrequency() + 1);
-            session.update(dBLemma);
-            session.getTransaction().commit();
+            lemmaRepository.setFrequencyById(lemmasList.get(0).getFrequency() + 1, lemmasList.get(0).getId());
         }
-//        session.getTransaction().commit();
+        dBLemma = lemmasList.get(0);
         return dBLemma;
-
     }
 
     private void forException (String message) {
-        long lemmasCount = (long) session.createQuery("SELECT COUNT(*) FROM Lemma WHERE siteId = :siteId")
-                .setParameter("siteId", siteId)
-                .stream()
-                .findFirst().get();
-        session.beginTransaction();
-        Query query = session.createQuery("update Site set dateTime = :dateTime, lastError = :message where id = :id");
-        query.setParameter("id", siteId);
-        query.setParameter("dateTime", LocalDateTime.now());
-        query.setParameter("message", message);
-        query.executeUpdate();
+        long lemmasCount = lemmaRepository.countBySiteId(siteId);
+        siteRepository.setTimeAndErrorById(LocalDateTime.now(), message, siteId);
         if(lemmasCount == 0) {
-            session.createQuery("update Site set status = :status where id = :id")
-                    .setParameter("id", siteId)
-                    .setParameter("status", SiteStatus.FAILED)
-                    .executeUpdate();
+            siteRepository.setStatusById(SiteStatus.FAILED, siteId);
         }
-        session.getTransaction().commit();
-//        session.getTransaction().commit();
+
     }
 
     private void clearDB (Page page) {
         for(Lemma lemma : page.getLemmas()) {
             int newFrequency = lemma.getFrequency() - 1;
-            if(newFrequency == 0) {
-                session.createQuery("DELETE FROM Lemma WHERE id = :id").setParameter("id", lemma.getId()).executeUpdate();
-            }
-            else {
-                session.beginTransaction();
-                lemma.setFrequency(newFrequency);
-                session.update(lemma);
-                session.getTransaction().commit();
+            if(newFrequency != 0) {
+                lemmaRepository.setFrequencyById(newFrequency, lemma.getId());
             }
         }
-        session.beginTransaction();
-        session.createQuery("DELETE FROM Page WHERE id = :id").setParameter("id", page.getId()).executeUpdate();
-        session.getTransaction().commit();
+        pageRepository.deleteById(page.getId());
     }
 
     private void checkLemmaMap (HashMap<String, Integer> pageLemmas, String message) {
         if(pageLemmas.isEmpty()) {
-            session.beginTransaction();
-            Query query = session.createQuery("update Site set dateTime = :dateTime, lastError = :message where id = :id");
-            query.setParameter("dateTime", LocalDateTime.now());
-            query.setParameter("message", message);
-            query.setParameter("id", siteId);
-            query.executeUpdate();
-            session.getTransaction().commit();
+            siteRepository.setTimeAndErrorById(LocalDateTime.now(), message, siteId);
         }
     }
-
-    private void updateSiteTime () {
-        session.beginTransaction();
-        Query query = session.createQuery("update Site set dateTime = :dateTime where id = :id");
-        query.setParameter("id", siteId);
-        query.setParameter("dateTime", LocalDateTime.now());
-        query.executeUpdate();
-        session.getTransaction().commit();
-
-    }
-
 
 }

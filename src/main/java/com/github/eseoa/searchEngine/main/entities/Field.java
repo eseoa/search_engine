@@ -1,4 +1,4 @@
-package com.github.eseoa.searchEngine.entities;
+package com.github.eseoa.searchEngine.main.entities;
 
 import lombok.Data;
 
@@ -7,6 +7,7 @@ import javax.persistence.*;
 @Entity
 @Table(name = "fields")
 @Data
+
 public class Field {
 
     @Id
