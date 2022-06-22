@@ -107,6 +107,7 @@ public class PageParser {
         for(String sLemma : pageLemmas.keySet()) {
             if(Thread.interrupted()) {
                 siteRepository.setTimeAndStatusById(LocalDateTime.now(), SiteStatus.INDEXED, siteId);
+
                 return;
             }
             sLemma = sLemma.trim();

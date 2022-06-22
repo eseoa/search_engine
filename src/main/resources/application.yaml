@@ -3,9 +3,9 @@ server:
   port: "${PORT:8080}"
 spring:
   datasource:
-    url: ""
-    username: ""
-    password: ""
+    url: "jdbc:${JAWSDB_URL:mysql://localhost:3306/test}"
+    username: "root"
+    password: "03012001"
     driver-class-name: "com.mysql.cj.jdbc.Driver"
     tomcat:
       max-active: 10
@@ -19,7 +19,7 @@ spring:
     hibernate:
       enable_lazy_load_no_trans: true
       dialect: "org.hibernate.dialect.MySQL5Dialect"
-      ddl-auto: create
+      ddl-auto: validate
 
 sites:
     - url: "https://lenta.ru/"
