@@ -19,7 +19,7 @@ spring:
     hibernate:
       enable_lazy_load_no_trans: true
       dialect: "org.hibernate.dialect.MySQL5Dialect"
-      ddl-auto: validate
+      ddl-auto: create
 
 sites:
     - url: "https://lenta.ru/"
