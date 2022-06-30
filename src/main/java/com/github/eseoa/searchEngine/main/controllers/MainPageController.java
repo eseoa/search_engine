@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -123,11 +124,13 @@ public class MainPageController {
             if (urlName.keySet().stream().anyMatch(url::contains)) {
                 String startUrl = urlName.keySet().stream().filter(url::contains).findFirst().get();
                 Optional<Site> mainSite = siteRepository.findByUrl(startUrl);
-                if (mainSite.isPresent()) {
-                    mainExistIndexPage(mainSite, url);
-                } else {
-                    mainNotExistIndexPage(url);
-                }
+                new Thread(() -> {
+                    if (mainSite.isPresent()) {
+                        mainExistIndexPage(startUrl, url);
+                    } else {
+                        mainNotExistIndexPage(url);
+                    }
+                }).start();
                 return new ResponseEntity<>(new IndexPageResponse(true), HttpStatus.OK);
             }
             return new ResponseEntity<>(
@@ -188,9 +191,9 @@ public class MainPageController {
         return true;
     }
 
-    private void mainExistIndexPage(Optional<Site> mainSite, String url) {
+    private void mainExistIndexPage(String startUrl, String url) {
         boolean isIndexing = false;
-        Site site = mainSite.get();
+        Site site = siteRepository.findByUrl(startUrl).get();
         if (site.getStatus().equals(SiteStatus.FAILED) || site.getStatus().equals(SiteStatus.INDEXED)) {
             isIndexing = true;
             siteRepository.setTimeAndStatusById(LocalDateTime.now(), SiteStatus.INDEXING, site.getId());
@@ -203,7 +206,7 @@ public class MainPageController {
         siteRepository.setTimeById(LocalDateTime.now(), site.getId());
     }
 
-    private void mainNotExistIndexPage(String url) {
+    private void mainNotExistIndexPage(String url)  {
         String siteUrl = urlName.keySet().stream().filter(url::contains).findFirst().get();
         String siteName = urlName.get(siteUrl);
         Site site = new Site(SiteStatus.INDEXING, LocalDateTime.now(), null, siteUrl, siteName);

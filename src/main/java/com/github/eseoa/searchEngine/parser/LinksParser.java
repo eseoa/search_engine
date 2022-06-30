@@ -56,12 +56,10 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
         List<LinksParser> taskList = new ArrayList<>();
         try {
             parsePage(taskList);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        for(LinksParser task : taskList){
-            task.join();
-        }
+            for(LinksParser task : taskList){
+                task.join();
+            }
+        } catch (InterruptedException ignore) {}
         return linksList;
     }
 
@@ -109,6 +107,7 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
             }
             addLinkToList(elements, taskList);
         }
+        catch (InterruptedException ignore) {}
         catch (Exception e) {
             e.printStackTrace();
         }

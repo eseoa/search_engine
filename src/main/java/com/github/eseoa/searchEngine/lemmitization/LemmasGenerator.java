@@ -51,6 +51,7 @@ public class LemmasGenerator {
                 .replaceAll(NOT_RU_LETTERS, SPACE)
                 .replaceAll(MULTIPLY_SPACE, SPACE)
                 .toLowerCase(Locale.ROOT)
+                .replaceAll("ё","е")
                 .trim()
                 .split(SPACE);
     }
