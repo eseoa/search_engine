@@ -1,12 +1,14 @@
 package com.github.eseoa.searchEngine.main.entities;
 
 import lombok.Data;
+import org.hibernate.annotations.SQLInsert;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table (name = "lemmas")
+@Table (name = "lemmas", uniqueConstraints = { @UniqueConstraint(columnNames = { "lemma", "site_id" })})
+@SQLInsert(sql="INSERT INTO lemmas (frequency, lemma, site_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE frequency = frequency + 1")
 @Data
 
 public class Lemma {

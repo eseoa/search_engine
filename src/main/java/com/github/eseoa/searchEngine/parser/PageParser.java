@@ -10,13 +10,17 @@ import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
 import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
 import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
 import org.hibernate.Session;
+import org.hibernate.exception.GenericJDBCException;
 import org.hibernate.query.Query;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,6 +81,12 @@ public class PageParser {
             workWithPage();
             return document.select("a");
         }
+        catch (CannotCreateTransactionException | JpaSystemException | GenericJDBCException ignore) {
+            if (document != null) {
+                return document.select("a");
+            }
+            return null;
+        }
         catch (Exception e) {
             e.printStackTrace();
             System.out.println(url);
@@ -121,21 +131,22 @@ public class PageParser {
     }
 
     private Lemma saveAndGetLemma (String sLemma) {
-        Lemma dBLemma;
-        ArrayList<Lemma> lemmasList = (ArrayList<Lemma>) lemmaRepository.findBySiteIdAndLemma(siteId, sLemma);
-        if(lemmasList.isEmpty()) {
-            dBLemma = new Lemma(sLemma, 1, siteId);
-            lemmaRepository.save(dBLemma);
-            return dBLemma;
-        }
-        if(lemmasList.size() > 1) {
-            lemmaRepository.deleteById(lemmasList.get(1).getId());
-            lemmaRepository.setFrequencyById(lemmasList.get(0).getFrequency() + 2, lemmasList.get(0).getId());
-        }
-        else {
-            lemmaRepository.setFrequencyById(lemmasList.get(0).getFrequency() + 1, lemmasList.get(0).getId());
-        }
-        dBLemma = lemmasList.get(0);
+        Lemma dBLemma = new Lemma(sLemma, 1, siteId);
+//        ArrayList<Lemma> lemmasList = (ArrayList<Lemma>) lemmaRepository.findBySiteIdAndLemma(siteId, sLemma);
+//        if(lemmasList.isEmpty()) {
+//            dBLemma = new Lemma(sLemma, 1, siteId);
+//                lemmaRepository.save(dBLemma);
+//            return dBLemma;
+//        }
+//        if(lemmasList.size() > 1) {
+//            lemmaRepository.deleteById(lemmasList.get(1).getId());
+//            lemmaRepository.setFrequencyById(lemmasList.get(0).getFrequency() + 2, lemmasList.get(0).getId());
+//        }
+//        else {
+//            lemmaRepository.setFrequencyById(lemmasList.get(0).getFrequency() + 1, lemmasList.get(0).getId());
+//        }
+//        dBLemma = lemmasList.get(0);
+        lemmaRepository.save(dBLemma);
         return dBLemma;
     }
 
