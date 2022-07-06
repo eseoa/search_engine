@@ -1,22 +1,15 @@
 package com.github.eseoa.searchEngine.seacrh;
 
 
-import com.github.eseoa.searchEngine.main.entities.Index;
-import com.github.eseoa.searchEngine.main.entities.Lemma;
-import com.github.eseoa.searchEngine.main.entities.Page;
-import com.github.eseoa.searchEngine.main.entities.Site;
+import com.github.eseoa.searchEngine.main.entities.*;
 import com.github.eseoa.searchEngine.lemmitization.LemmasGenerator;
-import com.github.eseoa.searchEngine.main.entities.repositories.IndexRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.*;
 import com.github.eseoa.searchEngine.main.entities.repositories.specs.IndexSpecification;
 import com.github.eseoa.searchEngine.main.entities.repositories.specs.LemmaSpecification;
 import com.github.eseoa.searchEngine.main.entities.repositories.specs.SearchCriteria;
 import com.github.eseoa.searchEngine.main.entities.repositories.specs.SearchOperation;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.text.DecimalFormat;
 import java.util.*;
 
 
@@ -148,12 +141,7 @@ public class Search {
                     isFirst = false;
                     continue;
                 }
-                for (int i = 0; i < pages.size(); i++) {
-                    if (!pages.get(i).getLemmas().stream().map(Lemma::getId).toList().contains(lemma.getId())) {
-                        pages.remove(i);
-                        i--;
-                    }
-                }
+                delPagesWithoutLemma(pages, lemma);
             }
             isFirst = true;
             pagesList.addAll(pages);
@@ -199,6 +187,16 @@ public class Search {
             dBLemmas.clear();;
         }
         return dBLemmas;
+
+    }
+
+    private void delPagesWithoutLemma (List<Page> pages, Lemma lemma) {
+        for (int i = 0; i < pages.size(); i++) {
+            if (!pages.get(i).getLemmas().stream().map(Lemma::getId).toList().contains(lemma.getId())) {
+                pages.remove(i);
+                i--;
+            }
+        }
 
     }
 

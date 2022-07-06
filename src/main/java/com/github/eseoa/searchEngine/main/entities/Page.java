@@ -55,9 +55,7 @@ public class Page {
                 int wordEnd = wordStart + s.length();
                 int end = Math.min(wordEnd + 50, text.length());
                 int start = Math.max(wordStart - 25, 0);
-
-                sb
-                        .append("...")
+                sb.append("...")
                         .append(text.substring(start, wordStart))
                         .append("<b>")
                         .append(text.substring(wordStart, wordEnd))

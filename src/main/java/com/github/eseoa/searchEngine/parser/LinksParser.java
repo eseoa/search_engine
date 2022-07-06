@@ -1,10 +1,7 @@
 package com.github.eseoa.searchEngine.parser;
 
 import com.github.eseoa.searchEngine.main.entities.Site;
-import com.github.eseoa.searchEngine.main.entities.repositories.IndexRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.*;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -59,7 +56,7 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
             for(LinksParser task : taskList){
                 task.join();
             }
-        } catch (InterruptedException ignore) {}
+        } catch (InterruptedException ignored) {}
         return linksList;
     }
 
@@ -88,9 +85,6 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
     }
 
     private void parsePage(List<LinksParser> taskList) throws InterruptedException {
-//        while (HibernateUtil.getStatistics().getSessionOpenCount() - HibernateUtil.getStatistics().getSessionCloseCount() >= 6) {
-//            Thread.sleep(500);
-//        }
         try {
             if (Thread.interrupted()) {
                 return;
@@ -107,7 +101,7 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
             }
             addLinkToList(elements, taskList);
         }
-        catch (InterruptedException ignore) {}
+        catch (InterruptedException ignored) {}
         catch (Exception e) {
             e.printStackTrace();
         }

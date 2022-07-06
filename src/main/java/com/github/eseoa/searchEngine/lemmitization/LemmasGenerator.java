@@ -27,17 +27,17 @@ public class LemmasGenerator {
                     .map(s -> s = s.substring(0, s.indexOf('|')))
                     .collect(Collectors.groupingBy(s -> s, Collectors.summingInt(value -> 1))));
         } catch (IOException e) {
-            e.printStackTrace();
             System.out.println("RussianLuceneMorphology() has an exception when creating a class object." +
                     "The map of lemmas will be empty");
+            e.printStackTrace();
         }
         catch (ArrayIndexOutOfBoundsException | WrongCharaterException e) {
-            e.printStackTrace();
             System.out.println("LemmasGenerator has an exception when when tried to get the morphology of the word.\n" +
                     "Most likely the string was entered incorrectly. LemmasGenerator works only with Russian words.");
             System.out.println("String received by the method: |" + text + "|");
             System.out.println("Array of words of the given string " + Arrays.toString(getStringArray(text)));
             System.out.println("The map of lemmas will be empty");
+            e.printStackTrace();
         }
         return wordCount;
     }

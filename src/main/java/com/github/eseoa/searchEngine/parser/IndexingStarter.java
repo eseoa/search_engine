@@ -2,11 +2,7 @@ package com.github.eseoa.searchEngine.parser;
 
 import com.github.eseoa.searchEngine.main.entities.Site;
 import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
-import com.github.eseoa.searchEngine.main.entities.repositories.IndexRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
-import org.hibernate.Session;
+import com.github.eseoa.searchEngine.main.entities.repositories.*;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.ForkJoinPool;
@@ -17,10 +13,10 @@ public class IndexingStarter implements Runnable {
     private static final int WAIT_TIME = 5_000;
     private final String url;
     private final String name;
-    SiteRepository siteRepository;
-    LemmaRepository lemmaRepository;
-    IndexRepository indexRepository;
-    PageRepository pageRepository;
+    private final SiteRepository siteRepository;
+    private final LemmaRepository lemmaRepository;
+    private final IndexRepository indexRepository;
+    private final PageRepository pageRepository;
 
 
     public IndexingStarter(String url,

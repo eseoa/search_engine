@@ -25,7 +25,6 @@ public class IndexSpecification implements Specification<Index> {
     public Predicate toPredicate(Root<Index> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
         List<Predicate> predicates = new ArrayList<>();
 
-        //add add criteria to predicates
         for (SearchCriteria criteria : list) {
             if (criteria.getOperation().equals(SearchOperation.GREATER_THAN)) {
                 predicates.add(builder.greaterThan(

@@ -5,6 +5,6 @@ import lombok.Data;
 
 @AllArgsConstructor
 @Data
-public class StartIndexingResponse {
+public class StartIndexingResponse implements ResponseMarker {
     private boolean result;
 }

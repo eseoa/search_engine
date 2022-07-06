@@ -1,6 +1,5 @@
 package com.github.eseoa.searchEngine.main.entities.repositories.specs;
 
-import com.github.eseoa.searchEngine.main.entities.Index;
 import com.github.eseoa.searchEngine.main.entities.Lemma;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -22,10 +21,9 @@ public class LemmaSpecification implements Specification<Lemma> {
 
     @Override
     public Predicate toPredicate(Root<Lemma> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
-        //create a new predicate list
+
         List<Predicate> predicates = new ArrayList<>();
 
-        //add add criteria to predicates
         for (SearchCriteria criteria : list) {
             if (criteria.getOperation().equals(SearchOperation.GREATER_THAN)) {
                 predicates.add(builder.greaterThan(

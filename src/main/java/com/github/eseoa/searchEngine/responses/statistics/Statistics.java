@@ -5,7 +5,6 @@ import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
 import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
 import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
 import lombok.Data;
-import org.hibernate.Session;
 
 import java.util.ArrayList;
 

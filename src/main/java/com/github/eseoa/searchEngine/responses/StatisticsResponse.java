@@ -5,10 +5,9 @@ import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
 import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
 import com.github.eseoa.searchEngine.responses.statistics.Statistics;
 import lombok.Data;
-import org.hibernate.Session;
 
 @Data
-public final class StatisticsResponse {
+public final class StatisticsResponse implements ResponseMarker{
     private boolean result;
     private Statistics statistics;
 

@@ -1,29 +1,19 @@
 package com.github.eseoa.searchEngine.main.controllers;
 
-
-import com.github.eseoa.searchEngine.config.Configuration;
 import com.github.eseoa.searchEngine.main.entities.Site;
 import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
-import com.github.eseoa.searchEngine.main.entities.repositories.IndexRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.*;
 import com.github.eseoa.searchEngine.parser.IndexingStarter;
 import com.github.eseoa.searchEngine.parser.PageParser;
 import com.github.eseoa.searchEngine.responses.*;
-import com.github.eseoa.searchEngine.seacrh.Search;
-import com.github.eseoa.searchEngine.seacrh.SearchResult;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import com.github.eseoa.searchEngine.seacrh.*;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -31,36 +21,31 @@ import java.util.concurrent.Executors;
 
 @Controller
 @RequestMapping("")
-@EnableConfigurationProperties(value = Configuration.class)
 public class MainPageController {
     private SiteRepository siteRepository;
     private LemmaRepository lemmaRepository;
     private PageRepository pageRepository;
     private IndexRepository indexRepository;
-
+    @Value("#{${sites}}")
+    private TreeMap<String, String> urlTitle;
     private static final int THREADS_COUNT = 5;
     private static ExecutorService executorService;
-    private static final TreeMap<String, String> urlName = new TreeMap<>();
 
     @Autowired
     public MainPageController(SiteRepository siteRepository,
                               LemmaRepository lemmaRepository,
                               PageRepository pageRepository,
                               IndexRepository indexRepository,
-                              Configuration configuration) {
+                              Environment environment) {
         this.siteRepository = siteRepository;
         this.lemmaRepository = lemmaRepository;
         this.pageRepository = pageRepository;
         this.indexRepository = indexRepository;
-        ArrayList<String> sites = new ArrayList<>(configuration.getSites().values());
-        PageParser.userAgent = configuration.getUserAgent();
-        for (int i = 0; i < sites.size(); i = i + 2) {
-            urlName.put(sites.get(i), sites.get(i + 1));
-        }
+        PageParser.userAgent = environment.getProperty("userAgent");
     }
 
     @GetMapping("/statistics")
-    public ResponseEntity statistics() {
+    public ResponseEntity<ResponseMarker> statistics() {
         try {
             StatisticsResponse statisticsResponse = new StatisticsResponse(lemmaRepository,
                     siteRepository,
@@ -74,7 +59,7 @@ public class MainPageController {
     }
 
     @GetMapping("/stopIndexing")
-    public ResponseEntity stopIndexing() {
+    public ResponseEntity<ResponseMarker> stopIndexing() {
         try {
             if (nowIndexing() && ( executorService != null) && !executorService.isShutdown() && !executorService.isTerminated()) {
                 executorService.shutdownNow();
@@ -82,9 +67,7 @@ public class MainPageController {
             }
             if (nowIndexing()) {
                 ArrayList<Site> sites = (ArrayList<Site>) siteRepository.findAllByStatus(SiteStatus.INDEXING);
-                sites.forEach(site -> {
-                    siteRepository.setStatusById(SiteStatus.INDEXED, site.getId());
-                });
+                sites.forEach(site -> siteRepository.setStatusById(SiteStatus.INDEXED, site.getId()));
                 return new ResponseEntity<>(new StopIndexingResponse(true), HttpStatus.OK);
             }
             return new ResponseEntity<>(new ErrorResponse(false, "индексация не запущена"), HttpStatus.OK);
@@ -96,17 +79,21 @@ public class MainPageController {
     }
 
     @GetMapping("/startIndexing")
-    public ResponseEntity startIndexing() {
+    public ResponseEntity<ResponseMarker> startIndexing() {
         try {
             if (!nowIndexing()) {
-                siteRepository.deleteAll();
-                pageRepository.deleteAll();
-                lemmaRepository.deleteAll();
-                indexRepository.deleteAll();
+                deleteAll();
                 executorService = Executors.newFixedThreadPool(THREADS_COUNT);
-                for (Map.Entry<String, String> entry : urlName.entrySet()) {
-                    executorService.submit(new IndexingStarter(entry.getKey(), entry.getValue(),
-                            siteRepository, lemmaRepository, indexRepository, pageRepository));
+                for (Map.Entry<String, String> entry : urlTitle.entrySet()) {
+                    String url = entry.getKey();
+                    String siteName = entry.getValue();
+                    executorService.submit(new IndexingStarter(
+                            url,
+                            siteName,
+                            siteRepository,
+                            lemmaRepository,
+                            indexRepository,
+                            pageRepository));
                 }
                 return new ResponseEntity<>(new StartIndexingResponse(true), HttpStatus.OK);
             }
@@ -119,10 +106,10 @@ public class MainPageController {
     }
 
     @PostMapping("/indexPage")
-    public ResponseEntity indexPage(@RequestParam String url) throws InterruptedException {
+    public ResponseEntity<ResponseMarker> indexPage(@RequestParam String url) {
         try {
-            if (urlName.keySet().stream().anyMatch(url::contains)) {
-                String startUrl = urlName.keySet().stream().filter(url::contains).findFirst().get();
+            if (urlTitle.keySet().stream().anyMatch(url::contains)) {
+                String startUrl = urlTitle.keySet().stream().filter(url::contains).findFirst().get();
                 Optional<Site> mainSite = siteRepository.findByUrl(startUrl);
                 new Thread(() -> {
                     if (mainSite.isPresent()) {
@@ -143,7 +130,7 @@ public class MainPageController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity search(@RequestParam HashMap<String, String> params) {
+    public ResponseEntity<ResponseMarker> search(@RequestParam HashMap<String, String> params) {
         try {
             ArrayList<SearchResult> searchResults;
             int offset = Integer.parseInt(params.get("offset"));
@@ -158,7 +145,7 @@ public class MainPageController {
                 SearchResponse searchResponse = new SearchResponse(true, searchResults.size(), searchResultsLimit);
                 return new ResponseEntity<>(searchResponse, HttpStatus.OK);
             }
-            if(urlName.keySet().contains(params.get("site"))) {
+            if(urlTitle.keySet().contains(params.get("site"))) {
                 searchResults = new Search(siteRepository, lemmaRepository, indexRepository).search(params.get("query"), params.get("site"));
                 ArrayList<SearchResult> searchResultsLimit = getSearchListLimit(searchResults, offset, limit);
                 SearchResponse searchResponse = new SearchResponse(true, searchResults.size(), searchResultsLimit);
@@ -207,8 +194,8 @@ public class MainPageController {
     }
 
     private void mainNotExistIndexPage(String url)  {
-        String siteUrl = urlName.keySet().stream().filter(url::contains).findFirst().get();
-        String siteName = urlName.get(siteUrl);
+        String siteUrl = urlTitle.keySet().stream().filter(url::contains).findFirst().get();
+        String siteName = urlTitle.get(siteUrl);
         Site site = new Site(SiteStatus.INDEXING, LocalDateTime.now(), null, siteUrl, siteName);
         siteRepository.save(site);
         new PageParser(siteRepository, lemmaRepository, indexRepository, pageRepository, site.getId(), url).parse();
@@ -217,6 +204,13 @@ public class MainPageController {
             siteRepository.setStatusById(SiteStatus.INDEXED, site.getId());
         }
         siteRepository.setTimeById(LocalDateTime.now(), site.getId());
+    }
+
+    private void deleteAll(){
+        siteRepository.deleteAll();
+        pageRepository.deleteAll();
+        lemmaRepository.deleteAll();
+        indexRepository.deleteAll();
     }
 
 }

@@ -1,18 +1,12 @@
 package com.github.eseoa.searchEngine.parser;
 
-import com.github.eseoa.searchEngine.main.entities.Index;
-import com.github.eseoa.searchEngine.main.entities.Lemma;
-import com.github.eseoa.searchEngine.main.entities.Page;
+import com.github.eseoa.searchEngine.main.entities.*;
 import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
 import com.github.eseoa.searchEngine.lemmitization.LemmasGenerator;
-import com.github.eseoa.searchEngine.main.entities.repositories.IndexRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.SiteRepository;
+import com.github.eseoa.searchEngine.main.entities.repositories.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -20,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 
-@Component
 public class PageParser {
     public static String userAgent;
     private static final double TITLE_RANK = 1.0;
@@ -29,10 +22,12 @@ public class PageParser {
     private final int siteId;
     private Document document;
     private Page page;
-    private final SiteRepository siteRepository;
-    private final LemmaRepository lemmaRepository;
-    private final IndexRepository indexRepository;
-    private final PageRepository pageRepository;
+
+    private SiteRepository siteRepository;
+    private LemmaRepository lemmaRepository;
+    private IndexRepository indexRepository;
+    private PageRepository pageRepository;
+
     private final ArrayList<Lemma> lemmasToSave = new ArrayList<>();
     private final ArrayList<Index> indexesToSave = new ArrayList<>();
     private static final Object lock = new Object();
@@ -72,7 +67,7 @@ public class PageParser {
                     url,
                     document.toString(),
                     siteId);
-            workWithPage();
+            workWithPageLemmas();
             synchronized (lock) {
                 if(Thread.interrupted()) {
                     return null;
@@ -90,7 +85,7 @@ public class PageParser {
         }
     }
 
-    private void workWithPage () {
+    private void workWithPageLemmas() {
         HashMap<String, Integer> pageLemmas = LemmasGenerator.getLemmaCountMap(document.text());
         HashMap<String, Integer> titleLemmas = LemmasGenerator.getLemmaCountMap(document.title());
         HashMap<String, Integer> bodyLemmas = LemmasGenerator.getLemmaCountMap(document.body().text());

@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class IndexPageResponse {
+public class IndexPageResponse implements ResponseMarker{
     private boolean result;
 }

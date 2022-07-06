@@ -38,15 +38,6 @@ public class Lemma {
     public Lemma() {
     }
 
-//    @Override
-//    public String toString() {
-//        String s = "Lemma{" + "id = " + id + ",  lemma = " + lemma + ", frequency = " + frequency + ", siteId = " + siteId + ", pagesCount = " + pages.size() + ", pages{";
-//        for(Page page: pages) {
-//            s = s + "pageId = " + page.getId() + ", path = " + page.getPath() + ", siteId = " + page.getSiteId() + ", pageCode = " + page.getCode();
-//        }
-//        s = s + "}\n}";
-//        return s;
-//    }
 @Override
 public String toString() {
     String s = "Lemma{" + "id = " + id + ",  lemma = " + lemma +"}";

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 @Data
 @AllArgsConstructor
-public class SearchResponse {
+public class SearchResponse implements ResponseMarker{
     private boolean result;
     private long count;
     private ArrayList<SearchResult> data;
