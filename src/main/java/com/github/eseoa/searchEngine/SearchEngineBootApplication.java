@@ -1,13 +1,13 @@
-package com.github.eseoa.searchEngine.main;
+package com.github.eseoa.searchEngine;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class Main {
+public class SearchEngineBootApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(Main.class, args);
+        SpringApplication.run(SearchEngineBootApplication.class, args);
     }
 
 }

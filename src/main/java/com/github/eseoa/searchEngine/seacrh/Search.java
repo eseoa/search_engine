@@ -1,13 +1,19 @@
 package com.github.eseoa.searchEngine.seacrh;
 
 
-import com.github.eseoa.searchEngine.main.entities.*;
+import com.github.eseoa.searchEngine.entities.Index;
+import com.github.eseoa.searchEngine.entities.Lemma;
+import com.github.eseoa.searchEngine.entities.Page;
+import com.github.eseoa.searchEngine.entities.Site;
+import com.github.eseoa.searchEngine.entities.repositories.IndexRepository;
+import com.github.eseoa.searchEngine.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.entities.repositories.SiteRepository;
+import com.github.eseoa.searchEngine.entities.*;
 import com.github.eseoa.searchEngine.lemmitization.LemmasGenerator;
-import com.github.eseoa.searchEngine.main.entities.repositories.*;
-import com.github.eseoa.searchEngine.main.entities.repositories.specs.IndexSpecification;
-import com.github.eseoa.searchEngine.main.entities.repositories.specs.LemmaSpecification;
-import com.github.eseoa.searchEngine.main.entities.repositories.specs.SearchCriteria;
-import com.github.eseoa.searchEngine.main.entities.repositories.specs.SearchOperation;
+import com.github.eseoa.searchEngine.entities.repositories.specs.IndexSpecification;
+import com.github.eseoa.searchEngine.entities.repositories.specs.LemmaSpecification;
+import com.github.eseoa.searchEngine.entities.repositories.specs.SearchCriteria;
+import com.github.eseoa.searchEngine.entities.repositories.specs.SearchOperation;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.*;

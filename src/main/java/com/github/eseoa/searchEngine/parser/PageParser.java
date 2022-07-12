@@ -1,9 +1,15 @@
 package com.github.eseoa.searchEngine.parser;
 
-import com.github.eseoa.searchEngine.main.entities.*;
-import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.entities.Index;
+import com.github.eseoa.searchEngine.entities.Lemma;
+import com.github.eseoa.searchEngine.entities.Page;
+import com.github.eseoa.searchEngine.entities.repositories.IndexRepository;
+import com.github.eseoa.searchEngine.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.entities.repositories.PageRepository;
+import com.github.eseoa.searchEngine.entities.repositories.SiteRepository;
+import com.github.eseoa.searchEngine.entities.enums.SiteStatus;
 import com.github.eseoa.searchEngine.lemmitization.LemmasGenerator;
-import com.github.eseoa.searchEngine.main.entities.repositories.*;
+import lombok.Setter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -15,33 +21,31 @@ import java.util.HashMap;
 import java.util.Optional;
 
 public class PageParser {
-    public static String userAgent;
+
     private static final double TITLE_RANK = 1.0;
     private static final double BODY_RANK = 0.8;
+
+    @Setter
+    private static SiteRepository siteRepository;
+    @Setter
+    private static LemmaRepository lemmaRepository;
+    @Setter
+    private static IndexRepository indexRepository;
+    @Setter
+    private static PageRepository pageRepository;
+    @Setter
+    private static String userAgent;
+
     private final String url;
     private final int siteId;
     private Document document;
     private Page page;
 
-    private SiteRepository siteRepository;
-    private LemmaRepository lemmaRepository;
-    private IndexRepository indexRepository;
-    private PageRepository pageRepository;
-
     private final ArrayList<Lemma> lemmasToSave = new ArrayList<>();
     private final ArrayList<Index> indexesToSave = new ArrayList<>();
     private static final Object lock = new Object();
 
-    public PageParser(SiteRepository siteRepository,
-                      LemmaRepository lemmaRepository,
-                      IndexRepository indexRepository,
-                      PageRepository pageRepository,
-                      int siteId,
-                      String url) {
-        this.siteRepository = siteRepository;
-        this.lemmaRepository = lemmaRepository;
-        this.indexRepository = indexRepository;
-        this.pageRepository = pageRepository;
+    public PageParser(int siteId, String url) {
         this.url = url;
         this.siteId = siteId;
         try {

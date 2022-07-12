@@ -1,7 +1,7 @@
-package com.github.eseoa.searchEngine.main.entities.repositories;
+package com.github.eseoa.searchEngine.entities.repositories;
 
-import com.github.eseoa.searchEngine.main.entities.Site;
-import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.entities.Site;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

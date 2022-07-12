@@ -1,7 +1,10 @@
 package com.github.eseoa.searchEngine.parser;
 
-import com.github.eseoa.searchEngine.main.entities.Site;
-import com.github.eseoa.searchEngine.main.entities.repositories.*;
+import com.github.eseoa.searchEngine.entities.Site;
+import com.github.eseoa.searchEngine.entities.repositories.IndexRepository;
+import com.github.eseoa.searchEngine.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.entities.repositories.PageRepository;
+import com.github.eseoa.searchEngine.entities.repositories.SiteRepository;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -17,20 +20,8 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
     private final String startUrl;
     private final Site site;
     private static boolean CANCEL = false;
-    private final SiteRepository siteRepository;
-    private final LemmaRepository lemmaRepository;
-    private final IndexRepository indexRepository;
-    private final PageRepository pageRepository;
 
-    public LinksParser(String url, String startUrl, Site site,
-                       SiteRepository siteRepository,
-                       LemmaRepository lemmaRepository,
-                       IndexRepository indexRepository,
-                       PageRepository pageRepository ) {
-        this.siteRepository = siteRepository;
-        this.lemmaRepository = lemmaRepository;
-        this.indexRepository = indexRepository;
-        this.pageRepository = pageRepository;
+    public LinksParser(String url, String startUrl, Site site) {
         this.site = site;
         this.url = url;
         this.startUrl = startUrl;
@@ -39,12 +30,8 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
         }
     }
 
-    private LinksParser(String url, String startUrl, Site site, CopyOnWriteArraySet<String> linksList,
-                        SiteRepository siteRepository,
-                        LemmaRepository lemmaRepository,
-                        IndexRepository indexRepository,
-                        PageRepository pageRepository ) {
-        this(url, startUrl, site, siteRepository, lemmaRepository, indexRepository, pageRepository);
+    private LinksParser(String url, String startUrl, Site site, CopyOnWriteArraySet<String> linksList) {
+        this(url, startUrl, site);
         this.linksList = linksList;
     }
 
@@ -67,11 +54,7 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
             }
             String link = element.attr("abs:href");
             if(!linksList.contains(link) && !link.isEmpty() && !link.contains("#") && link.startsWith(startUrl)){
-                LinksParser linkParser = new LinksParser(link, startUrl, site, linksList,
-                        siteRepository,
-                        lemmaRepository,
-                        indexRepository,
-                        pageRepository);
+                LinksParser linkParser = new LinksParser(link, startUrl, site, linksList);
                 linkParser.fork();
                 linksList.add(link);
                 taskList.add(linkParser);
@@ -90,12 +73,7 @@ public class  LinksParser extends RecursiveTask<CopyOnWriteArraySet<String>> {
                 return;
             }
             Thread.sleep(5000);
-            Elements elements = new PageParser(siteRepository,
-                    lemmaRepository,
-                    indexRepository,
-                    pageRepository,
-                    site.getId(),
-                    url).parse();
+            Elements elements = new PageParser(site.getId(), url).parse();
             if (elements == null) {
                 return;
             }

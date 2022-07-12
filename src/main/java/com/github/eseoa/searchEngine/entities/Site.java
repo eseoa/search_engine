@@ -1,6 +1,6 @@
-package com.github.eseoa.searchEngine.main.entities;
+package com.github.eseoa.searchEngine.entities;
 
-import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.entities.enums.SiteStatus;
 import lombok.Data;
 
 import javax.persistence.*;

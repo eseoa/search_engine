@@ -1,7 +1,6 @@
-package com.github.eseoa.searchEngine.main.entities.repositories;
+package com.github.eseoa.searchEngine.entities.repositories;
 
-import com.github.eseoa.searchEngine.main.entities.Index;
-import com.github.eseoa.searchEngine.main.entities.Lemma;
+import com.github.eseoa.searchEngine.entities.Index;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

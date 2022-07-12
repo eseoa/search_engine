@@ -1,4 +1,4 @@
-package com.github.eseoa.searchEngine.main.entities.repositories.specs;
+package com.github.eseoa.searchEngine.entities.repositories.specs;
 
 import lombok.Data;
 

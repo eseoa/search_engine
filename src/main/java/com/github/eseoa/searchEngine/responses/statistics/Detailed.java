@@ -1,8 +1,8 @@
 package com.github.eseoa.searchEngine.responses.statistics;
 
-import com.github.eseoa.searchEngine.main.entities.Site;
-import com.github.eseoa.searchEngine.main.entities.repositories.LemmaRepository;
-import com.github.eseoa.searchEngine.main.entities.repositories.PageRepository;
+import com.github.eseoa.searchEngine.entities.Site;
+import com.github.eseoa.searchEngine.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.entities.repositories.PageRepository;
 import lombok.Data;
 
 @Data

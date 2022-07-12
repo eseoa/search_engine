@@ -1,4 +1,4 @@
-package com.github.eseoa.searchEngine.main.entities;
+package com.github.eseoa.searchEngine.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

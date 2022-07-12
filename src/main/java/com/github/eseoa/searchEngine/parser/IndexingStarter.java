@@ -1,8 +1,11 @@
 package com.github.eseoa.searchEngine.parser;
 
-import com.github.eseoa.searchEngine.main.entities.Site;
-import com.github.eseoa.searchEngine.main.entities.enums.SiteStatus;
-import com.github.eseoa.searchEngine.main.entities.repositories.*;
+import com.github.eseoa.searchEngine.entities.Site;
+import com.github.eseoa.searchEngine.entities.enums.SiteStatus;
+import com.github.eseoa.searchEngine.entities.repositories.IndexRepository;
+import com.github.eseoa.searchEngine.entities.repositories.LemmaRepository;
+import com.github.eseoa.searchEngine.entities.repositories.PageRepository;
+import com.github.eseoa.searchEngine.entities.repositories.SiteRepository;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.ForkJoinPool;
@@ -15,20 +18,11 @@ public class IndexingStarter implements Runnable {
     private final String name;
     private final SiteRepository siteRepository;
     private final LemmaRepository lemmaRepository;
-    private final IndexRepository indexRepository;
-    private final PageRepository pageRepository;
 
 
-    public IndexingStarter(String url,
-                           String name,
-                           SiteRepository siteRepository,
-                           LemmaRepository lemmaRepository,
-                           IndexRepository indexRepository,
-                           PageRepository pageRepository ) {
+    public IndexingStarter(String url, String name, SiteRepository siteRepository, LemmaRepository lemmaRepository) {
         this.siteRepository = siteRepository;
         this.lemmaRepository = lemmaRepository;
-        this.indexRepository = indexRepository;
-        this.pageRepository = pageRepository;
         this.url = url;
         this.name = name;
     }
@@ -40,13 +34,7 @@ public class IndexingStarter implements Runnable {
             Site site = new Site(SiteStatus.INDEXING, LocalDateTime.now(), null, url, name);
             siteRepository.save(site);
             LinksParser.setCANCEL(false);
-            LinksParser linksParser = new LinksParser(url,
-                    url,
-                    site,
-                    siteRepository,
-                    lemmaRepository,
-                    indexRepository,
-                    pageRepository);
+            LinksParser linksParser = new LinksParser(url, url, site);
             forkJoinPool.submit(linksParser);
             while (true) {
                 if (Thread.interrupted()) {
@@ -73,7 +61,5 @@ public class IndexingStarter implements Runnable {
         catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
 }

@@ -1,6 +1,6 @@
-package com.github.eseoa.searchEngine.main.entities.repositories.specs;
+package com.github.eseoa.searchEngine.entities.repositories.specs;
 
-import com.github.eseoa.searchEngine.main.entities.Lemma;
+import com.github.eseoa.searchEngine.entities.Lemma;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.*;
