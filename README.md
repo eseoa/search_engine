@@ -6,8 +6,10 @@
 ## Список используемых технологий ##
 Проект написан на java 17, в качестве базы данных была выбрана MySQL.
 * ORM - hibernate 5.6.1
-* spring-boot-starter-web 2.5.6
-* spring-boot-starter-thymeleaf 2.5.6
+* spring MVC 
+* spring Data JPA
+* spring Boot
+* thymeleaf
 * lombok 1.18.22
 * junit-jupiter 5.8.1
 * Jsoup 1.14.3
@@ -15,35 +17,6 @@
 Apache Solr: https://github.com/akuznetsov/russianmorphology.
 ## Инструкция по запуску ##
 Для запуска обязательно нужно задать в application.yaml (search_engine/srs/main/resources/application.yaml) сайты по которым будет происходить индексация и поиск, UserAgent и порт по которому будет запуск.
-
-Пример:
-
-![image](https://user-images.githubusercontent.com/46792824/172185185-6c717b92-e60a-4f65-b492-0bd3d28f0779.png)
-
-Также обязательно настроить hibernate config (search_engine/srs/main/resources/hibernate.cfg.xml), а именно задать url, имя пользователя, пароль, диалект и максимальное количество подключений 
-(максимальное количество доступных подключений должно быть не меньше количество потоков, связано это с тем что нет ограничения на потоки, при индексации сайта, программа будет использовать все доступные ресурсы). При первом запуске приложения значение <property name="hbm2ddl.auto"> должно быть create, для создания БД в дальнейшем изменить на validate
-
-Пример:
-
-![image](https://user-images.githubusercontent.com/46792824/172186321-c0d39636-1d37-4046-a912-68eed5214b2e.png)
-  ![image](https://user-images.githubusercontent.com/46792824/172190126-6aededa5-f06c-486a-96f6-b2188ce2f4de.png)
-
-
-Также для старта приложения необходимо иметь файл index.html который будет отвечать за вывод web страницы и откуда будут приходить запросы в контроллер MainPageController,
-index.html должен находить в search_engine/srs/main/resources/templates
- ## Послесловие ##
-[Ссылка на рабочую версию проекта](https://search-engine-skillbox.herokuapp.com/)
-  
-  Тестами покрыты методы использующие алгоритмы:
-  * парсинга страницы
-  * поиска по всем сайтам и по выбранному сайту
-  * приведения строк к леммам 
-  
-  **Обязательно при запуске индексации сайта (IndexingStarter) или парсинга страницы (PageParser) вне MainPageController, перед запуском задать userAgent, PageParser.userAgent = "userAgent"**, это связано с тем, что класс PageParser не является spring @Component, поэтому ему приходится задавать значение userAgent.
-  
-  Для запуска индексации сайта нужно создать объект класса IndexingStarter(ссылка на сайт, название сайта), затем вызвать у него метод run.
-  
-  Для запуска парсинга страницы PageParser.parse(ссылка на страницу, Объект класса Site)
   
   **Поиск осуществляется только по сайтам указанным в application.yaml**
   
